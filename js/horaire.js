@@ -34,23 +34,24 @@ $(function () {
     }
 
     function appendLineToTable(line, platform) {
-        var match = line.match(/<td>([A-Z]+\d+)<\/td>/);
-        if (match && match[1]) {
-            var trainNumber = match[1];
-            var svgPath = `assets/label/${trainNumber}.svg`;
+        var match = line.match(/<td>([A-Z]+)(00)?(\d*)<\/td>/);
+        if (match) {
+            var trainPrefix = match[1];
+            var hasDoubleZero = match[2];
+            var svgPath = `assets/label/${trainPrefix}${hasDoubleZero ? '' : match[3]}.svg`;
 
             $.ajax({
                 url: svgPath,
                 type: 'HEAD',
                 success: function() {
                     // Le fichier SVG spécifique existe, l'utiliser
-                    var svgImage = `<img src="${svgPath}" alt="${trainNumber}" style="width:50px; height:auto;">`;
-                    var modifiedLine = line.replace(`<td>${trainNumber}</td>`, `<td>${svgImage}</td>`);
+                    var svgImage = `<img src="${svgPath}" alt="${trainPrefix}" style="width:50px; height:auto;">`;
+                    var modifiedLine = line.replace(`<td>${trainPrefix}${hasDoubleZero ? '00' : ''}${match[3]}</td>`, `<td>${svgImage}</td>`);
                     $(`#stationboard_platform${platform} tbody`).append(modifiedLine);
                 },
                 error: function() {
                     // Le fichier SVG spécifique n'existe pas, utiliser le texte
-                    console.warn(`SVG non trouvé pour le train: ${trainNumber}, utilisation du texte.`);
+                    console.warn(`SVG non trouvé pour le train: ${trainPrefix}${hasDoubleZero ? '00' : ''}${match[3]}, utilisation du texte.`);
                     $(`#stationboard_platform${platform} tbody`).append(line);
                 }
             });
@@ -64,7 +65,7 @@ $(function () {
     function refresh() {
         if (station) {
             $.get('https://transport.opendata.ch/v1/stationboard', { station: station, limit: 15 }, function (data) {
-                var stationName = data.station.name;
+                var stationName = "🚉" + ' - ' + data.station.name;
                 $('title').text(stationName);
                 $('#station-name').text(stationName);
 

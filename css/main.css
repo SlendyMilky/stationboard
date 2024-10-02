@@ -5,6 +5,8 @@ h2 {
    margin-bottom: 20px;
    display: flex;
    align-items: center;
+   border-radius: 10px;
+   border: 2px solid white;
 }
 
 #clock {
@@ -22,7 +24,7 @@ strong {
    margin-bottom: 20px;
    background-color: #ffffff3d;
    border-radius: 10px;
-   overflow: hidden;
+   overflow: auto;
    box-shadow: 0 8px 6px -6px black;
 }
 
@@ -30,6 +32,7 @@ table {
    border-collapse: collapse;
    width: 100%;
 }
+
 
 td, th {
    padding: 8px;
@@ -63,4 +66,5 @@ header.header-flex {
     transform: scale(1.5);
     transform-origin: 0 0; /* Assure que le zoom commence en haut à gauche */
 }
+
 
