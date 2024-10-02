@@ -1,6 +1,6 @@
 # stationboard
 
-Repo contenant le code pour une réplique d'un tableau d'affichage de la CFF.
+Repo contenant le code pour une réplique a ma sauce d'un tableau d'affichage des CFF.
 
 ## Description
 
