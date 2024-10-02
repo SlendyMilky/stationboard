@@ -70,8 +70,9 @@ $(function () {
                 $('#station-name').text(stationName);
 
                 $('#stationboard-container').empty();
-                // Utiliser une expression régulière pour extraire le numéro de base de la voie
-                var platforms = Array.from(new Set(data.stationboard.map(item => item.stop.platform.match(/^\d+/)[0]))).sort((a, b) => a - b);
+                var hasUnknownPlatforms = false; // Flag pour vérifier la présence de trains sans plateforme
+
+                var platforms = Array.from(new Set(data.stationboard.map(item => item.stop.platform ? item.stop.platform.match(/^\d+/)[0] : null).filter(p => p !== null))).sort((a, b) => a - b);
                 platforms.forEach(platform => {
                     $('#stationboard-container').append(createTable(platform));
                 });
@@ -80,18 +81,30 @@ $(function () {
                 platforms.forEach(platform => {
                     platformCounts[platform] = 0;
                 });
+                platformCounts["unknown"] = 0; // Initialiser le compteur pour les trains sans plateforme
 
                 $(data.stationboard).each(function () {
                     var departure = moment(this.stop.departure);
                     var prognosis = moment(this.stop.prognosis.departure);
                     var delay = getDelay(prognosis, departure);
-                    var line = '<tr><td>' + (this.category || "") + (this.number || "") + '</td><td>' + departure.format('HH:mm') + delay + '</td><td>' + this.to + '</td><td>' + this.stop.platform + '</td></tr>';
+                    var line = '<tr><td>' + (this.category || "") + (this.number || "") + '</td><td>' + departure.format('HH:mm') + delay + '</td><td>' + this.to + '</td><td>' + (this.stop.platform || "unknown") + '</td></tr>';
 
-                    // Utiliser le numéro de base de la voie pour l'ajout à la table
-                    var basePlatform = this.stop.platform.match(/^\d+/)[0];
-                    appendLineToTable(line, basePlatform);
-
-                    platformCounts[basePlatform]++;
+                    if (!this.stop.platform) {
+                        if (!hasUnknownPlatforms) {
+                            // Créer le tableau pour les trains sans plateforme seulement s'il y a des données
+                            $('#stationboard-container').append(createTable("unknown"));
+                            hasUnknownPlatforms = true;
+                            platformCounts["unknown"] = 0; // Initialiser le compteur pour les trains sans plateforme
+                        }
+                        // Ajouter la ligne au tableau des trains sans plateforme
+                        appendLineToTable(line, "unknown");
+                        platformCounts["unknown"]++;
+                    } else {
+                        // Utiliser le numéro de base de la voie pour l'ajout à la table
+                        var basePlatform = this.stop.platform.match(/^\d+/)[0];
+                        appendLineToTable(line, basePlatform);
+                        platformCounts[basePlatform]++;
+                    }
                 });
             }, 'json').fail(function () {
                 console.error("Erreur lors de la récupération des données de l'API.");
