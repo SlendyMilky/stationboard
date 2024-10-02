@@ -48,7 +48,7 @@ Ce projet est sous licence MIT. Voir le fichier [LICENSE](./LICENSE) pour plus d
 
 ## Remerciements
 
-Ce code a été écrit par un collègue et non par moi-même. Un grand merci à [opendata.ch](https://transport.opendata.ch/) pour leur API gratuite.
+Un grand merci à [opendata.ch](https://transport.opendata.ch/) pour leur API gratuite.
 
 ## Contribuer
 
