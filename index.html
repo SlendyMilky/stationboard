@@ -1,37 +1,36 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="fr">
 <head>
-    <meta charset="utf-8">
-    <title>La Tour-de-Peilz</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
-    <script src="js/horaire.js"></script>
-    <link href="css/main.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stationboard - Tableau d'Informations des Transports Publics</title>
+  <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-<div class="container"> 
-    <header class="header-flex">
-        <h2 id="station-name">Nom de la Station</h2>
-        <div id="clock" class="clock-style"></div>
+  <main class="container">
+    <header>
+      <h1>Stationboard</h1>
+      <p>Une réplique améliorée du tableau d'affichage des CFF.</p>
     </header>
-    <div id="stationboard-container" class="row"></div>
-</div>
 
-<script>
-function updateClock() {
-    var now = moment();
-    $('#clock').text(now.format('HH:mm:ss'));
-}
+    <section>
+      <h2>À propos du projet</h2>
+      <p>Ce projet vise à fournir une interface moderne et interactive pour visualiser les horaires des transports publics en temps réel, similaire au tableau d'affichage des CFF. Il utilise l'API fournie par <a href="https://transport.opendata.ch/">transport.opendata.ch</a> pour récupérer les données en direct.</p>
+      <p>Pour plus de détails, consultez notre <a href="https://github.com/SlendyMilky/stationboard">dépôt GitHub</a>.</p>
+    </section>
 
-$(document).ready(function() {
-    setInterval(updateClock, 1000);
-    updateClock();
-});
-</script>
+    <section>
+      <h2>Navigation</h2>
+      <ul>
+        <li><a href="/locations/">Locations</a></li>
+        <li><a href="/connections/">Connexions</a></li>
+        <li><a href="/stationboard/">Tableau des Départs</a></li>
+      </ul>
+    </section>
 
+    <footer>
+      <p>&copy; 2024 Slendy_Milky. Tous droits réservés.</p>
+    </footer>
+  </main>
 </body>
 </html>

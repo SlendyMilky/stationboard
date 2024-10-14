@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stationboard - Lausanne</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <main class="container">
+    <header>
+      <div class="header-top" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;">
+        <div style="flex: 1 1 100%; text-align: center; margin-bottom: 1rem;">
+          <h1 id="header-title">Tableau des Départs - Lausanne</h1>
+        </div>
+        <div style="display: flex; justify-content: center; align-items: center; flex: 1 1 auto; min-width: 200px;">
+          <div id="digital-clock" style="margin-right: 1rem; font-size: 1.2rem;"></div>
+          <div id="countdown-timer" style="font-size: 1.2rem;">30</div>
+        </div>
+      </div>
+      <nav>
+        <a href="/">Accueil</a>
+        <a href="/locations/">Locations</a>
+        <a href="/connections/">Connexions</a>
+      </nav>
+    </header>
+
+    <section id="station-info">
+      <h2>Prochains Départs</h2>
+      <p>Station: <strong id="station-name">Lausanne</strong></p>
+    </section>
+
+    <section id="train-tables">
+      <!-- Les tableaux des voies seront insérés ici par JavaScript -->
+    </section>
+
+    <footer>
+      <p>&copy; 2024 Slendy_Milky. Tous droits réservés.</p>
+    </footer>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const station = urlParams.get('station') || 'Lausanne';
+      const voieParam = urlParams.get('voie');
+      const limit = 20;
+      const apiUrl = `https://transport.opendata.ch/v1/stationboard?station=${encodeURIComponent(station)}&limit=${limit}`;
+      const refreshInterval = 30; // Intervalle de rafraîchissement en secondes
+      let countdown = refreshInterval;
+
+      // Fonction pour mettre à jour l'horloge digitale
+      function updateClock() {
+        const now = new Date();
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+        document.getElementById('digital-clock').textContent = `${hours}:${minutes}:${seconds}`;
+      }
+
+      // Initialisation de l'horloge digitale
+      updateClock();
+      setInterval(updateClock, 1000);
+
+      // Fonction pour mettre à jour le compte à rebours
+      function updateCountdown() {
+        countdown--;
+        if (countdown < 0) {
+          countdown = refreshInterval;
+        }
+        document.getElementById('countdown-timer').textContent = countdown;
+      }
+
+      // Initialisation du compte à rebours
+      setInterval(updateCountdown, 1000);
+
+      function updateTrainTables() {
+        // Réinitialiser le compte à rebours
+        countdown = refreshInterval;
+        document.getElementById('countdown-timer').textContent = countdown;
+
+        // Mise à jour dynamique du titre et des éléments de la page en fonction de la station
+        document.title = `Stationboard - ${station}`;
+        document.getElementById('header-title').textContent = `Tableau des Départs - ${station}`;
+        document.getElementById('station-name').textContent = station;
+
+        fetch(apiUrl)
+          .then(response => response.json())
+          .then(data => {
+            const connections = data.stationboard;
+            const trainsByTrack = {};
+
+            connections.forEach(conn => {
+              let track = conn.stop.platform || 'N/A';
+              let trackChanged = false;
+              if (track.includes('!')) {
+                trackChanged = true;
+                track = track.replace('!', '');
+              }
+              if (voieParam) {
+                const voies = voieParam.split(',').flatMap(v => v.includes('-') ? 
+                  Array.from({length: parseInt(v.split('-')[1]) - parseInt(v.split('-')[0]) + 1}, (_, i) => (parseInt(v.split('-')[0]) + i).toString()) 
+                  : v
+                );
+                if (!voies.includes(track)) {
+                  return;
+                }
+              }
+              if (!trainsByTrack[track]) {
+                trainsByTrack[track] = [];
+              }
+              trainsByTrack[track].push({ ...conn, trackChanged });
+            });
+
+            const trainTablesContainer = document.getElementById('train-tables');
+            trainTablesContainer.innerHTML = ''; // Effacer les tableaux précédents
+
+            fetch('https://svg-cdn.slyc.ch/assets/sbb/files.json')
+              .then(response => response.json())
+              .then(iconsData => {
+                for (const [track, trains] of Object.entries(trainsByTrack)) {
+                  const section = document.createElement('section');
+                  section.classList.add('train-table');
+
+                  const trackHeader = document.createElement('h3');
+                  trackHeader.textContent = `Voie ${track}`;
+                  section.appendChild(trackHeader);
+
+                  const table = document.createElement('table');
+                  table.setAttribute('role', 'table');
+
+                  const thead = document.createElement('thead');
+                  const headerRow = document.createElement('tr');
+                  ['Train', 'Destination', 'Heure de départ', 'Quai'].forEach(text => {
+                    const th = document.createElement('th');
+                    th.scope = 'col';
+                    th.textContent = text;
+                    headerRow.appendChild(th);
+                  });
+                  thead.appendChild(headerRow);
+                  table.appendChild(thead);
+
+                  const tbody = document.createElement('tbody');
+
+                  trains.forEach(train => {
+                    const row = document.createElement('tr');
+
+                    const type = train.category || 'N/A';
+                    const number = train.number || '';
+                    const fullType = number ? `${type}${number}` : type;
+                    const destination = train.to || 'N/A';
+                    const departureTime = new Date(train.stop.departure).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    let platform = train.stop.platform || 'N/A';
+                    let platformDisplay = platform;
+                    if (train.trackChanged) {
+                      platformDisplay = `<span class="changed-voie">${platform}</span>`;
+                    }
+
+                    const iconUrl = `https://svg-cdn.slyc.ch/assets/sbb/${type}-${number}.svg`;
+                    const iconExists = iconsData.includes(`${type}-${number}.svg`);
+
+                    const trainTypeCell = document.createElement('td');
+                    if (iconExists) {
+                      const img = document.createElement('img');
+                      img.src = iconUrl;
+                      img.alt = fullType;
+                      img.classList.add('train-icon');
+                      trainTypeCell.appendChild(img);
+                    } else {
+                      trainTypeCell.textContent = fullType;
+                    }
+                    row.appendChild(trainTypeCell);
+
+                    const destinationCell = document.createElement('td');
+                    destinationCell.textContent = destination;
+                    row.appendChild(destinationCell);
+
+                    const timeCell = document.createElement('td');
+                    timeCell.textContent = departureTime;
+                    row.appendChild(timeCell);
+
+                    const platformCell = document.createElement('td');
+                    platformCell.innerHTML = platformDisplay;
+                    row.appendChild(platformCell);
+
+                    tbody.appendChild(row);
+                  });
+
+                  table.appendChild(tbody);
+                  section.appendChild(table);
+                  trainTablesContainer.appendChild(section);
+                }
+              });
+          })
+          .catch(error => {
+            console.error('Erreur lors de la récupération des données:', error);
+            const container = document.getElementById('train-tables');
+            container.innerHTML = '<p>Impossible de charger les données des trains actuellement.</p>';
+          });
+      }
+
+      updateTrainTables();
+      setInterval(updateTrainTables, refreshInterval * 1000); // Rafraîchit les tableaux toutes les 30 secondes
+    });
+  </script>
+</body>
+</html>
